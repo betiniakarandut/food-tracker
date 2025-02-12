@@ -87,5 +87,4 @@ Contributions are welcome!  Please follow these steps:
 *   Inspired by the need for efficient food service management.
 
 ## Contact
-
 If you have any questions or suggestions, please feel free to contact me.
