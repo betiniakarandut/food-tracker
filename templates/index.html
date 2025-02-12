@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Food Tracker</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Food Service</h1>
+
+        <select id="mealTime">
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+        </select>
+
+        <input type="text" id="participantId" placeholder="Last 4 Digits of ID card" maxlength="4" pattern="[0-9]{4}">
+        <button id="checkButton">Check</button>
+
+        <div id="result"></div>
+        <div id="error"></div>
+
+        <h2>Meal Counts</h2>
+        <div id="mealCounts"></div>
+
+        <h2>Awaiting Participants</h2>
+        <ul id="awaitingParticipants"></ul>
+
+        <h2>Participant Status</h2>
+        <select id="statusMealTime">
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+        </select>
+        <input type="text" id="statusParticipantId" placeholder="Last 4 Digits of ID card" maxlength="4" pattern="[0-9]{4}">
+        <button id="checkStatusButton">Check Status</button>
+        <div id="status"></div>
+
+        <h2>Remaining Participants</h2>
+        <select id="remainingMealTime">  <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+        </select>
+        <button id="remainingParticipantsButton">Show Remaining Participants</button>  <ul id="remainingParticipantsList"></ul>  </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>

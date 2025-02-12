@@ -1,0 +1,68 @@
+body {
+    font-family: sans-serif;
+    background-color: rgb(7, 11, 62);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+#awaitingParticipants {
+    margin-top: 20px;
+}
+
+#awaitingParticipants li {
+    list-style: none;
+    margin-bottom: 10px;
+}
+
+.confirm-button {
+    margin-left: 10px;
+    background-color: rgb(255, 0, 4);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.confirm-button:hover {
+    background-color: darkred;
+}
+
+
+#result {
+    color: green;
+    margin-top: 10px;
+}
+
+#error {
+    color: red;
+    margin-top: 10px;
+}
+
+#status {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+#remainingParticipantsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+#remainingParticipantsList li {
+    flex: 1 0 200px;
+    padding: 5px;
+    border: 1px solid #ccc;
+}
