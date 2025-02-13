@@ -16,7 +16,7 @@ A web application for managing food service, built with FastAPI and featuring re
 ## 🛠️ Technologies Used
 
 *   **Backend:** Python, FastAPI 🐍
-*   **Database:** SQLite 🗄️
+*   **Database:** PostgreSQL 🗄️
 *   **Frontend:** HTML, CSS, JavaScript 🕸️
 *   **Real-time Updates:** Server-Sent Events (SSE) 📡
 
