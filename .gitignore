@@ -1,3 +1,43 @@
-venv/*
-__pycache__/*
-.gitignore
+# Compiled Python files
+*.pyc
+*.pyo
+__pycache__/
+
+# Distribution / packaging
+.eggs
+dist
+build
+*.egg-info
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# Log files
+*.log
+
+# Temporary files
+*~
+*.tmp
+*.swp
+.DS_Store  # macOS specific
+thumbs.db  # Windows specific
+
+# IDE / Editor specific files
+.idea/      # IntelliJ IDEA
+.vscode/    # VS Code
+.settings/  # Eclipse
+.project   # Eclipse
+
+# SQLite database files (if you were using SQLite)
+*.db
+meals.db
+
+# Render specific files (if any. Adjust as needed)
+.render-build.log
+.cache
+
+# Other files or directories you want to exclude
+# Add your custom rules here
