@@ -1,0 +1,17 @@
+# Ignore SQLite database files
+*.db
+meals.db
+
+# Ignore Python virtual environment (if you have one)
+venv/
+
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+
+# Ignore .env files (for environment variables - if you use them)
+.env
+
+# Ignore Render-specific files (if any).
+.render-build.log
+.cache
