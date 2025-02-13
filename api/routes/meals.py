@@ -1,14 +1,23 @@
-from fastapi import Request, APIRouter, HTTPException, BackgroundTasks, Response
+from fastapi import Request, APIRouter, HTTPException, BackgroundTasks, Response, Depends
 from ..models.meal import Meal
 from datetime import datetime, timedelta
 from fastapi.responses import StreamingResponse
-import sqlite3
+import psycopg2
 import asyncio
 import json
+import os
 
 router = APIRouter()
 
-db_file = "meals.db"
+DATABASE_URL = os.environ.get("postgresql://food_tracker_db_to4i_user:JukrSYFHprMnBVHWlCMjRMLFekdHhKfq@dpg-cumged3qf0us73cjhee0-a.oregon-postgres.render.com/food_tracker_db_to4i")
+
+def get_db():
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        yield conn
+    finally:
+        if conn:
+            conn.close()
 
 # Dictionary to store awaiting participants (key: participant_id, value: (meal_time, expiry_time,))
 awaiting_participants = {}
@@ -17,7 +26,7 @@ awaiting_participants = {}
 connected_clients = {}
 
 @router.post("/serve_food")
-async def serve_food(meal: Meal, background_tasks: BackgroundTasks) -> dict:
+async def serve_food(meal: Meal, background_tasks: BackgroundTasks, db: psycopg2.extensions.connection = Depends(get_db)):
     try:
         last_four_digits = meal.participant_id
         full_participant_id = f"msp_{last_four_digits.zfill(4)}"
@@ -26,40 +35,34 @@ async def serve_food(meal: Meal, background_tasks: BackgroundTasks) -> dict:
         if not is_valid_participant_id(last_four_digits):
             raise HTTPException(status_code=400, detail="Invalid participant ID. Please enter 4 digits between 0000 and 0350.")
 
-        conn = sqlite3.connect(db_file)
-        cursor = conn.cursor()
-
         try:
-            with conn:
-                cursor.execute("""
-                    SELECT 1 FROM meals 
-                    WHERE participant_id = ? AND meal_time = ? AND date_served = ?
-                """, (full_participant_id, meal_time, datetime.now().date().isoformat()))  # Added date
+            with db:
+                with db.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT 1 FROM meals 
+                        WHERE participant_id = %s AND meal_time = %s AND date_served = %s
+                    """, (full_participant_id, meal_time, datetime.now().date().isoformat()))
 
+                    if cursor.fetchone():
+                        return {"message": f"Participant {full_participant_id} has already been served {meal_time} today!"}
 
-                if cursor.fetchone():
-                    return {"message": f"Participant {full_participant_id} has already been served {meal_time} today!"}
+                    # Check if the participant is already awaiting service (AFTER checking the database)
+                    if full_participant_id in awaiting_participants and awaiting_participants[full_participant_id][0] == meal_time:
+                        if awaiting_participants[full_participant_id][1] > datetime.now():
+                            return {
+                                "message": f"Participant {full_participant_id} is already awaiting service for {meal_time}."
+                            }
 
-                # Check if the participant is already awaiting service (AFTER checking the database)
-                if full_participant_id in awaiting_participants and awaiting_participants[full_participant_id][0] == meal_time:
-                    if awaiting_participants[full_participant_id][1] > datetime.now():
-                        return {
-                            "message": f"Participant {full_participant_id} is already awaiting service for {meal_time}."
-                        }
+                    expiry_time = datetime.now() + timedelta(minutes=12)
+                    awaiting_participants[full_participant_id] = (meal_time, expiry_time)  # Add to awaiting only if not already served
+                    background_tasks.add_task(remove_from_awaiting, full_participant_id)
 
-                expiry_time = datetime.now() + timedelta(minutes=12)
-                awaiting_participants[full_participant_id] = (meal_time, expiry_time)  # Add to awaiting only if not already served
-                background_tasks.add_task(remove_from_awaiting, full_participant_id)
+                    return {
+                        "message": f"Participant {full_participant_id} is awaiting service for {meal_time}. Serving will be confirmed shortly."
+                    }
 
-                return {
-                    "message": f"Participant {full_participant_id} is awaiting service for {meal_time}. Serving will be confirmed shortly."
-                }
-
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
             raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-
-        finally:
-            conn.close()
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -75,13 +78,10 @@ async def remove_from_awaiting(participant_id: str) -> None:
 
 
 @router.post("/food_is_served")
-async def food_is_served(meal: Meal) -> dict:
-    """
-    Endpoint to confirm food has been served to a participant.
-    """
+async def food_is_served(meal: Meal, db: psycopg2.extensions.connection = Depends(get_db)):
     try:
         last_four_digits = meal.participant_id
-        full_participant_id = f"{last_four_digits.zfill(4)}"
+        full_participant_id = f"msp_{last_four_digits.zfill(4)}"
         meal_time = meal.meal_time
 
         # Check if the participant is awaiting service
@@ -91,36 +91,31 @@ async def food_is_served(meal: Meal) -> dict:
         date_served = datetime.now().date().isoformat()
         time_served = datetime.now().time().strftime("%H:%M %p")
 
-        conn = sqlite3.connect(db_file)
-        cursor = conn.cursor()
-
         try:
-            with conn:
-                cursor.execute("""
-                    SELECT 1 FROM meals 
-                    WHERE participant_id = ? AND meal_time = ? AND date_served = ?
-                """, (full_participant_id, meal_time, date_served))
+            with db:
+                with db.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT 1 FROM meals 
+                        WHERE participant_id = %s AND meal_time = %s AND date_served = %s
+                    """, (full_participant_id, meal_time, date_served))
 
-                if cursor.fetchone():
-                    raise HTTPException(status_code=400, detail=f"{full_participant_id} has already been served {meal_time} today!")
+                    if cursor.fetchone():
+                        raise HTTPException(status_code=400, detail=f"{full_participant_id} has already been served {meal_time} today!")
 
-                cursor.execute("""
-                    INSERT INTO meals (participant_id, meal_time, date_served, time_served)
-                    VALUES (?, ?, ?, ?)
-                """, (full_participant_id, meal_time, date_served, time_served))
+                    cursor.execute("""
+                        INSERT INTO meals (participant_id, meal_time, date_served, time_served)
+                        VALUES (%s, %s, %s, %s)
+                    """, (full_participant_id, meal_time, date_served, time_served))
 
-                del awaiting_participants[full_participant_id]
+                    del awaiting_participants[full_participant_id]
 
-                for queue in connected_clients.values():
-                    await queue.put("update")
+                    for queue in connected_clients.values():
+                        await queue.put("update")
 
-                return {"message": f"{meal_time.capitalize()} served to {full_participant_id} at {time_served}."}
+                    return {"message": f"{meal_time.capitalize()} served to {full_participant_id} at {time_served}."}
 
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
             raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-
-        finally:
-            conn.close()
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -173,30 +168,25 @@ async def remove_connected_client(participant_id: str) -> dict:
 
 
 @router.get("/meal_counts")
-async def get_meal_counts(meal_time: str) -> dict:
-    """
-    Get the count of participants served for a specific meal time.
-    """
+async def get_meal_counts(meal_time: str, db: psycopg2.extensions.connection = Depends(get_db)):
     date_served = datetime.now().date().isoformat()
-    conn = sqlite3.connect(db_file)
-    cursor = conn.cursor()
 
     try:
-        with conn:
-            cursor.execute("""
-                SELECT COUNT(*) FROM meals 
-                WHERE meal_time = ? AND date_served = ?
-            """, (meal_time, date_served))
-            count = cursor.fetchone()[0]
-            return {meal_time: f"{count} persons served"}
-    except sqlite3.Error as e:
+        with db:
+            with db.cursor() as cursor:
+                cursor.execute("""
+                    SELECT COUNT(*) FROM meals 
+                    WHERE meal_time = %s AND date_served = %s
+                """, (meal_time, date_served))
+                count = cursor.fetchone()[0]
+                return {meal_time: f"{count} persons served"}
+
+    except psycopg2.Error as e:
         return {meal_time: f"Error fetching meal counts: {str(e)}"}
-    finally:
-        conn.close()
 
 
 @router.get("/participant_status/{participant_id}")
-async def get_participant_status(participant_id: str, meal_time: str) -> dict:
+async def get_participant_status(participant_id: str, meal_time: str, db: psycopg2.extensions.connection = Depends(get_db)):
     """
     Get the current status of a participant for a specific meal time.
     """
@@ -204,34 +194,31 @@ async def get_participant_status(participant_id: str, meal_time: str) -> dict:
         # Validate the participant ID
         if not is_valid_participant_id(participant_id):
             raise HTTPException(status_code=400, detail="Invalid participant ID. Please enter 4 digits between 0000 and 0350.")
-        
+
         full_participant_id = f"msp_{participant_id.zfill(4)}"
         date_served = datetime.now().date().isoformat()
-        
-        # Check if the participant is awaiting service
+
         if full_participant_id in awaiting_participants and awaiting_participants[full_participant_id][0] == meal_time:
             return {
                 "status": "awaiting_service",
                 "message": f"Participant {full_participant_id} is awaiting service for {meal_time}."
             }
 
-        # Check if the participant has been served
-        conn = sqlite3.connect(db_file)
-        cursor = conn.cursor()
         try:
-            with conn:
-                cursor.execute("""
-                    SELECT 1 FROM meals 
-                    WHERE participant_id = ? AND meal_time = ? AND date_served = ?
-                """, (full_participant_id, meal_time, date_served))
-                if cursor.fetchone():
-                    return {
-                        "status": "served",
-                        "message": f"Participant {full_participant_id} has already been served {meal_time} today."
-                    }
-        finally:
-            conn.close()
-        
+            with db:
+                with db.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT 1 FROM meals 
+                        WHERE participant_id = %s AND meal_time = %s AND date_served = %s
+                    """, (full_participant_id, meal_time, date_served))
+                    if cursor.fetchone():
+                        return {
+                            "status": "served",
+                            "message": f"Participant {full_participant_id} has already been served {meal_time} today."
+                        }
+        except psycopg2.Error as e:
+            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
         # If not found in awaiting or served lists, the participant is not registered
         return {
             "status": "not_registered",
@@ -240,35 +227,32 @@ async def get_participant_status(participant_id: str, meal_time: str) -> dict:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+
 @router.get("/remaining_participants/{meal_time}")
-async def get_remaining_participants(meal_time: str) -> dict:
+async def get_remaining_participants(meal_time: str, db: psycopg2.extensions.connection = Depends(get_db)):
     """
     Endpoint to get a list of participant IDs who have not requested a meal at a given meal_time.
     """
     try:
         date_served = datetime.now().date().isoformat()
-        conn = sqlite3.connect(db_file)
-        cursor = conn.cursor()
 
         try:
-            with conn:
-                cursor.execute("""
-                    SELECT participant_id FROM meals 
-                    WHERE meal_time = ? AND date_served = ?
-                """, (meal_time, date_served))
-                served_participants = {row[0] for row in cursor.fetchall()}
+            with db:
+                with db.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT participant_id FROM meals 
+                        WHERE meal_time = %s AND date_served = %s
+                    """, (meal_time, date_served))
+                    served_participants = {row[0] for row in cursor.fetchall()}
 
-                all_participants = {f"msp_{str(i).zfill(4)}" for i in range(1, 351)}
-                remaining_participants = list(all_participants - served_participants)
-                remaining_participants.sort()
+                    all_participants = {f"msp_{str(i).zfill(4)}" for i in range(1, 351)}
+                    remaining_participants = list(all_participants - served_participants)
+                    remaining_participants.sort()
 
-                return {"meal_time": meal_time, "remaining_participants": remaining_participants}
+                    return {"meal_time": meal_time, "remaining_participants": remaining_participants}
 
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
             raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-
-        finally:
-            conn.close()
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
