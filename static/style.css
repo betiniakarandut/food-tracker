@@ -1,68 +1,156 @@
+/* styles.css */
 body {
     font-family: sans-serif;
-    background-color: rgb(7, 11, 62);
+    background-color: rgb(7, 11, 62); /* Darker background */
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     margin: 0;
+    color: #333; /* Darker text color for better contrast */
 }
 
 .container {
     background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 30px; /* Increased padding */
+    border-radius: 12px; /* More rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Softer, more pronounced shadow */
     text-align: center;
+    width: 600px; /* Set a max width for larger screens */
+}
+
+h2 {
+    color: #007bff; /* Blue heading */
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+select,
+input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #007bff; /* Blue button */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+#result,
+#error,
+#status {
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+#result {
+    color: #28a745; /* Green for success */
+}
+
+#error {
+    color: #dc3545; /* Red for error */
 }
 
 #awaitingParticipants {
     margin-top: 20px;
+    border-top: 1px solid #eee; /* Subtle separator line */
+    padding-top: 20px;
 }
 
 #awaitingParticipants li {
     list-style: none;
     margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    display: flex; /* Use flexbox for layout */
+    align-items: center; /* Vertically center content */
+    transition: background-color 0.3s ease; /* Smooth transition for background color */
 }
 
+#awaitingParticipants li.served {
+    background-color: #f8f9fa; /* Very light gray background for served */
+    color: red; /* Red text for served */
+    text-decoration: line-through; /* Add a strikethrough for visual confirmation */
+}
+
+
 .confirm-button {
-    margin-left: 10px;
-    background-color: rgb(255, 0, 4);
+    background-color: #007bff; /* Blue confirm button */
     color: white;
     border: none;
     padding: 5px 10px;
     border-radius: 5px;
     cursor: pointer;
+    margin-left: auto; /* Push button to the right */
+    transition: background-color 0.3s ease;
 }
 
 .confirm-button:hover {
-    background-color: darkred;
+    background-color: #0056b3; /* Darker blue on hover */
 }
 
-
-#result {
-    color: green;
-    margin-top: 10px;
+#mealCounts {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
 }
 
-#error {
-    color: red;
-    margin-top: 10px;
+#mealCounts p {
+    margin-bottom: 5px;
 }
 
-#status {
-    margin-top: 10px;
-    font-weight: bold;
+#remainingParticipants {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
 }
 
 #remainingParticipantsList {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+    margin-top: 10px;
 }
 
 #remainingParticipantsList li {
-    flex: 1 0 200px;
-    padding: 5px;
-    border: 1px solid #ccc;
+    flex: 1 0 200px; /* Adjust as needed */
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    background-color: #f8f9fa; /* Light gray background */
+    transition: background-color 0.3s ease;
+}
+
+#remainingParticipantsList li:hover {
+    background-color: #e9ecef; /* Slightly darker gray on hover */
+}
+
+/* Responsive adjustments (example) */
+@media (max-width: 768px) {
+    .container {
+        width: 90%;
+    }
+
+    #remainingParticipantsList li {
+        flex: 1 0 150px; /* Adjust for smaller screens */
+    }
 }
