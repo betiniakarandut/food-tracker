@@ -232,7 +232,7 @@ async def get_participant_status(participant_id: str, meal_time: str, db: psycop
         if not is_valid_participant_id(participant_id):
             raise HTTPException(status_code=400, detail="Invalid participant ID. Please enter 4 digits between 0000 and 0350.")
 
-        full_participant_id = f"{participant_id.zfill(4)}"
+        full_participant_id = f"msp_{participant_id.zfill(4)}"
         date_served = datetime.now().date().isoformat()
 
         if full_participant_id in awaiting_participants and awaiting_participants[full_participant_id][0] == meal_time:
@@ -282,7 +282,7 @@ async def get_remaining_participants(meal_time: str, db: psycopg2.extensions.con
                     """, (meal_time, date_served))
                     served_participants = {f"msp_{str(row[0]).zfill(4)}" for row in cursor.fetchall()}
 
-                    all_participants = {f"msp_{str(i).zfill(4)}" for i in range(1, 313)}
+                    all_participants = {f"msp_{str(i).zfill(4)}" for i in range(1, 351)}
                     remaining_participants = list(all_participants - served_participants)
                     remaining_participants.sort()
 
@@ -301,4 +301,4 @@ def is_valid_participant_id(participant_id: str) -> bool:
     if len(participant_id) != 4 or not participant_id.isdigit():
         return False
     num = int(participant_id)
-    return 1 <= num <= 312
+    return 1 <= num <= 351
