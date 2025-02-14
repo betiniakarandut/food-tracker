@@ -34,7 +34,7 @@ try:
 
             # Now create the table inside the schema
             cursor.execute("""
-                CREATE TABLE IF NOT EXISTS food_tracker_schema.meals (
+                CREATE TABLE IF NOT EXISTS meals (
                     id SERIAL PRIMARY KEY,
                     participant_id VARCHAR(255) NOT NULL,
                     meal_time VARCHAR(50) NOT NULL,
@@ -64,7 +64,7 @@ def get_db():
 async def serve_food(meal: Meal, background_tasks: BackgroundTasks, db: psycopg2.extensions.connection = Depends(get_db)):
     try:
         last_four_digits = meal.participant_id
-        full_participant_id = f"{last_four_digits.zfill(4)}"
+        full_participant_id = f"msp_{last_four_digits.zfill(4)}"
         meal_time = meal.meal_time
 
         if not is_valid_participant_id(last_four_digits):
@@ -74,7 +74,7 @@ async def serve_food(meal: Meal, background_tasks: BackgroundTasks, db: psycopg2
             with db:
                 with db.cursor() as cursor:
                     cursor.execute("""
-                        SELECT 1 FROM food_tracker_schema.meals 
+                        SELECT 1 FROM meals 
                         WHERE participant_id = %s AND meal_time = %s AND date_served = %s
                     """, (full_participant_id, meal_time, datetime.now().date().isoformat()))
 
@@ -121,7 +121,7 @@ async def food_is_served(meal: Meal, db: psycopg2.extensions.connection = Depend
             with db:
                 with db.cursor() as cursor:
                     cursor.execute("""
-                        SELECT 1 FROM food_tracker_schema.meals
+                        SELECT 1 FROM meals
                         WHERE participant_id = %s AND meal_time = %s AND date_served = %s
                     """, (full_participant_id, meal_time, date_served))
 
@@ -129,7 +129,7 @@ async def food_is_served(meal: Meal, db: psycopg2.extensions.connection = Depend
                         raise HTTPException(status_code=400, detail=f"{full_participant_id} has already been served {meal_time} today!")
 
                     cursor.execute("""
-                        INSERT INTO food_tracker_schema.meals (participant_id, meal_time, date_served, time_served)
+                        INSERT INTO meals (participant_id, meal_time, date_served, time_served)
                         VALUES (%s, %s, %s, %s)
                     """, (full_participant_id, meal_time, date_served, time_served))
 
@@ -212,7 +212,7 @@ async def get_meal_counts(meal_time: str, db: psycopg2.extensions.connection = D
         with db:
             with db.cursor() as cursor:
                 cursor.execute("""
-                    SELECT COUNT(*) FROM food_tracker_schema.meals 
+                    SELECT COUNT(*) FROM meals 
                     WHERE meal_time = %s AND date_served = %s
                 """, (meal_time, date_served))
                 count = cursor.fetchone()[0]
@@ -245,7 +245,7 @@ async def get_participant_status(participant_id: str, meal_time: str, db: psycop
             with db:
                 with db.cursor() as cursor:
                     cursor.execute("""
-                        SELECT 1 FROM food_tracker_schema.meals 
+                        SELECT 1 FROM meals 
                         WHERE participant_id = %s AND meal_time = %s AND date_served = %s
                     """, (full_participant_id, meal_time, date_served))
                     if cursor.fetchone():
@@ -277,12 +277,14 @@ async def get_remaining_participants(meal_time: str, db: psycopg2.extensions.con
             with db:
                 with db.cursor() as cursor:
                     cursor.execute("""
-                        SELECT participant_id FROM food_tracker_schema.meals 
+                        SELECT participant_id FROM meals 
                         WHERE meal_time = %s AND date_served = %s
                     """, (meal_time, date_served))
-                    served_participants = {f"msp_{str(row[0]).zfill(4)}" for row in cursor.fetchall()}
+                    served_participants = {f"{str(row[0]).zfill(4)}" for row in cursor.fetchall()}
+                    print(served_participants)
 
                     all_participants = {f"msp_{str(i).zfill(4)}" for i in range(1, 351)}
+                    print(all_participants)
                     remaining_participants = list(all_participants - served_participants)
                     remaining_participants.sort()
 
