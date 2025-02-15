@@ -1,26 +1,26 @@
 /* styles.css */
 body {
     font-family: sans-serif;
-    background-color: rgb(7, 11, 62); /* Darker background */
+    background-color: rgb(7, 11, 62);
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     margin: 0;
-    color: #333; /* Darker text color for better contrast */
+    color: #333;
 }
 
 .container {
     background-color: white;
-    padding: 30px; /* Increased padding */
-    border-radius: 12px; /* More rounded corners */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Softer, more pronounced shadow */
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     text-align: center;
-    width: 600px; /* Set a max width for larger screens */
+    width: 600px;
 }
 
 h2 {
-    color: #007bff; /* Blue heading */
+    color: #007bff;
     margin-bottom: 20px;
 }
 
@@ -41,7 +41,7 @@ input[type="text"] {
 }
 
 button {
-    background-color: #007bff; /* Blue button */
+    background-color: #007bff;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -51,61 +51,25 @@ button {
 }
 
 button:hover {
-    background-color: #0056b3; /* Darker blue on hover */
+    background-color: #0056b3;
 }
 
 #result,
-#error,
-#status {
+#error {
     margin-top: 15px;
     font-weight: bold;
 }
 
 #result {
-    color: #28a745; /* Green for success */
+    color: #28a745; /* Default green for success messages */
+}
+
+#result.duplicate { /* Red color specifically for duplicate messages */
+    color: #dc3545;
 }
 
 #error {
-    color: #dc3545; /* Red for error */
-}
-
-#awaitingParticipants {
-    margin-top: 20px;
-    border-top: 1px solid #eee; /* Subtle separator line */
-    padding-top: 20px;
-}
-
-#awaitingParticipants li {
-    list-style: none;
-    margin-bottom: 10px;
-    padding: 10px;
-    border: 1px solid #eee;
-    border-radius: 5px;
-    display: flex; /* Use flexbox for layout */
-    align-items: center; /* Vertically center content */
-    transition: background-color 0.3s ease; /* Smooth transition for background color */
-}
-
-#awaitingParticipants li.served {
-    background-color: #f8f9fa; /* Very light gray background for served */
-    color: red; /* Red text for served */
-    text-decoration: line-through; /* Add a strikethrough for visual confirmation */
-}
-
-
-.confirm-button {
-    background-color: #007bff; /* Blue confirm button */
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-left: auto; /* Push button to the right */
-    transition: background-color 0.3s ease;
-}
-
-.confirm-button:hover {
-    background-color: #0056b3; /* Darker blue on hover */
+    color: #dc3545;
 }
 
 #mealCounts {
@@ -132,25 +96,25 @@ button:hover {
 }
 
 #remainingParticipantsList li {
-    flex: 1 0 200px; /* Adjust as needed */
+    flex: 1 0 200px;
     padding: 10px;
     border: 1px solid #ced4da;
     border-radius: 5px;
-    background-color: #f8f9fa; /* Light gray background */
+    background-color: #f8f9fa;
     transition: background-color 0.3s ease;
 }
 
 #remainingParticipantsList li:hover {
-    background-color: #e9ecef; /* Slightly darker gray on hover */
+    background-color: #e9ecef;
 }
 
-/* Responsive adjustments (example) */
+/* Responsive adjustments */
 @media (max-width: 768px) {
     .container {
         width: 90%;
     }
 
     #remainingParticipantsList li {
-        flex: 1 0 150px; /* Adjust for smaller screens */
+        flex: 1 0 150px;
     }
 }
